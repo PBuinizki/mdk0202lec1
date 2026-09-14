@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Терминал и Bash — верный пёс программиста</title>
+    <style>
+      /* ============ БАЗА ============ */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg: #1e1e2e;
+        --bg2: #181825;
+        --panel: #313244;
+        --text: #cdd6f4;
+        --text-dim: #6c7086;
+        --yellow: #f9e2af;
+        --blue: #89b4fa;
+        --cyan: #89dceb;
+        --green: #a6e3a1;
+        --red: #f38ba8;
+        --orange: #fab387;
+      }
+
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        background: radial-gradient(ellipse at top, #2a2a3e 0%, #11111b 100%);
+        color: var(--text);
+      }
+
+      /* ============ СЦЕНА ============ */
+      .stage {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        perspective: 1600px;
+      }
+
+      /* ============ СЛАЙД ============ */
+      .slide {
+        position: absolute;
+        width: min(92vw, 1200px);
+        height: min(88vh, 700px);
+        background: linear-gradient(160deg, #1e1e2e 0%, #262637 100%);
+        border-radius: 22px;
+        padding: 50px 65px;
+        overflow-y: auto;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6),
+          0 0 0 1px rgba(137, 180, 250, 0.15),
+          inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+        opacity: 0;
+        transform: translateX(120%) scale(0.85) rotateY(-25deg);
+        transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+          opacity 0.5s ease;
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+
+      .slide.active {
+        opacity: 1;
+        transform: translateX(0) scale(1) rotateY(0);
+        pointer-events: auto;
+        z-index: 2;
+      }
+
+      .slide.prev {
+        opacity: 0;
+        transform: translateX(-120%) scale(0.85) rotateY(25deg);
+      }
+
+      /* Скроллбар внутри слайда */
+      .slide::-webkit-scrollbar {
+        width: 8px;
+      }
+      .slide::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .slide::-webkit-scrollbar-thumb {
+        background: rgba(137, 180, 250, 0.3);
+        border-radius: 4px;
+      }
+
+      /* ============ ТИПОГРАФИКА ============ */
+      h1 {
+        font-size: 58px;
+        font-weight: 800;
+        color: var(--yellow);
+        line-height: 1.1;
+        margin-bottom: 25px;
+        letter-spacing: -0.5px;
+      }
+      h2 {
+        font-size: 38px;
+        font-weight: 700;
+        color: var(--yellow);
+        margin-bottom: 25px;
+        letter-spacing: -0.3px;
+        position: relative;
+        padding-bottom: 15px;
+      }
+      h2::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 70px;
+        height: 4px;
+        background: linear-gradient(90deg, var(--blue), var(--cyan));
+        border-radius: 2px;
+      }
+      h3 {
+        font-size: 24px;
+        color: var(--cyan);
+        margin: 20px 0 12px;
+        font-weight: 600;
+      }
+      p,
+      li {
+        font-size: 21px;
+        line-height: 1.6;
+        color: var(--text);
+        margin-bottom: 10px;
+      }
+      strong {
+        color: var(--orange);
+        font-weight: 700;
+      }
+      em {
+        color: var(--cyan);
+        font-style: italic;
+      }
+      ul,
+      ol {
+        margin-left: 28px;
+        margin-bottom: 10px;
+      }
+      li {
+        margin-bottom: 8px;
+      }
+
+      /* ============ КОД ============ */
+      code {
+        background: rgba(137, 180, 250, 0.12);
+        color: var(--green);
+        padding: 3px 9px;
+        border-radius: 6px;
+        font-family: "JetBrains Mono", "Consolas", "Menlo", monospace;
+        font-size: 0.92em;
+        border: 1px solid rgba(137, 180, 250, 0.15);
+      }
+      pre {
+        background: #11111b;
+        border-left: 4px solid var(--blue);
+        padding: 18px 22px;
+        border-radius: 10px;
+        overflow-x: auto;
+        margin: 15px 0;
+        box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4);
+      }
+      pre code {
+        background: transparent;
+        border: none;
+        padding: 0;
+        color: var(--text);
+        font-size: 18px;
+        line-height: 1.7;
+        display: block;
+        white-space: pre;
+      }
+      .cmt {
+        color: var(--text-dim);
+        font-style: italic;
+      }
+      .cmd {
+        color: var(--green);
+      }
+      .var {
+        color: var(--yellow);
+      }
+
+      /* ============ ТАБЛИЦЫ ============ */
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 15px 0;
+        font-size: 19px;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      th {
+        background: var(--panel);
+        color: var(--yellow);
+        padding: 12px 18px;
+        text-align: left;
+        border-bottom: 2px solid var(--blue);
+        font-weight: 700;
+      }
+      td {
+        padding: 10px 18px;
+        border-bottom: 1px solid rgba(108, 112, 134, 0.25);
+        color: var(--text);
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tbody tr:hover {
+        background: rgba(137, 180, 250, 0.05);
+      }
+
+      /* ============ ПЛАШКИ ============ */
+      .tip {
+        display: block;
+        padding: 14px 22px;
+        border-radius: 10px;
+        font-size: 19px;
+        margin-top: 20px;
+        line-height: 1.5;
+        animation: pulse 3s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-3px);
+        }
+      }
+      .tip-info {
+        background: rgba(137, 180, 250, 0.12);
+        border-left: 5px solid var(--blue);
+        color: var(--text);
+      }
+      .tip-warn {
+        background: rgba(243, 139, 168, 0.12);
+        border-left: 5px solid var(--red);
+        color: #f8d7da;
+      }
+      .tip-good {
+        background: rgba(166, 227, 161, 0.12);
+        border-left: 5px solid var(--green);
+        color: #d4f5d4;
+      }
+
+      /* ============ 2 КОЛОНКИ ============ */
+      .two-cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+      }
+      .two-cols > div {
+        background: rgba(49, 50, 68, 0.5);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid rgba(137, 180, 250, 0.1);
+      }
+
+      /* ============ ТИТУЛЬНЫЙ ============ */
+      .title-slide {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        background: linear-gradient(
+          135deg,
+          #1e1e2e 0%,
+          #313244 60%,
+          #1e1e2e 100%
+        );
+      }
+      .title-slide h1 {
+        font-size: 68px;
+        margin-bottom: 15px;
+      }
+      .title-slide .subtitle {
+        font-size: 28px;
+        color: var(--cyan);
+        margin-bottom: 30px;
+      }
+      .title-slide .meta {
+        color: var(--text-dim);
+        font-size: 18px;
+      }
+      .dog {
+        font-size: 110px;
+        margin-bottom: 20px;
+        display: inline-block;
+        animation: wag 1.5s ease-in-out infinite;
+      }
+      @keyframes wag {
+        0%,
+        100% {
+          transform: rotate(-8deg) scale(1);
+        }
+        50% {
+          transform: rotate(8deg) scale(1.08);
+        }
+      }
+
+      /* ============ НАВИГАЦИЯ ============ */
+      .nav {
+        position: fixed;
+        bottom: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        background: rgba(24, 24, 37, 0.9);
+        backdrop-filter: blur(12px);
+        padding: 10px 20px;
+        border-radius: 50px;
+        border: 1px solid rgba(137, 180, 250, 0.2);
+        z-index: 100;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      }
+      .nav button {
+        background: rgba(137, 180, 250, 0.15);
+        border: none;
+        color: var(--blue);
+        font-size: 22px;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+      }
+      .nav button:hover:not(:disabled) {
+        background: var(--blue);
+        color: var(--bg);
+        transform: scale(1.1);
+      }
+      .nav button:disabled {
+        opacity: 0.25;
+        cursor: not-allowed;
+      }
+      .counter {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 15px;
+        color: var(--text);
+        min-width: 70px;
+        text-align: center;
+        letter-spacing: 1px;
+      }
+      .counter b {
+        color: var(--yellow);
+      }
+
+      /* ============ ИНДИКАТОР ПРОГРЕССА ============ */
+      .progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        background: linear-gradient(
+          90deg,
+          var(--blue),
+          var(--cyan),
+          var(--green)
+        );
+        transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        z-index: 200;
+        box-shadow: 0 0 15px rgba(137, 180, 250, 0.6);
+      }
+
+      /* ============ ТОЧКИ-ИНДИКАТОРЫ ============ */
+      .dots {
+        position: fixed;
+        bottom: 25px;
+        right: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        z-index: 100;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(137, 180, 250, 0.25);
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .dot:hover {
+        background: var(--cyan);
+        transform: scale(1.4);
+      }
+      .dot.active {
+        background: var(--yellow);
+        transform: scale(1.5);
+        box-shadow: 0 0 10px var(--yellow);
+      }
+
+      /* ============ АНИМАЦИИ СОДЕРЖИМОГО ============ */
+      .slide.active > * {
+        animation: fadeUp 0.6s ease backwards;
+      }
+      .slide.active > *:nth-child(1) {
+        animation-delay: 0.15s;
+      }
+      .slide.active > *:nth-child(2) {
+        animation-delay: 0.25s;
+      }
+      .slide.active > *:nth-child(3) {
+        animation-delay: 0.35s;
+      }
+      .slide.active > *:nth-child(4) {
+        animation-delay: 0.45s;
+      }
+      .slide.active > *:nth-child(5) {
+        animation-delay: 0.55s;
+      }
+      .slide.active > *:nth-child(6) {
+        animation-delay: 0.65s;
+      }
+      .slide.active > *:nth-child(7) {
+        animation-delay: 0.75s;
+      }
+
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ============ АДАПТИВ ============ */
+      @media (max-width: 900px) {
+        .slide {
+          padding: 30px 28px;
+          height: 92vh;
+        }
+        h1 {
+          font-size: 36px;
+        }
+        h2 {
+          font-size: 26px;
+        }
+        h3 {
+          font-size: 19px;
+        }
+        p,
+        li {
+          font-size: 16px;
+        }
+        pre code {
+          font-size: 14px;
+        }
+        table {
+          font-size: 15px;
+        }
+        .tip {
+          font-size: 15px;
+        }
+        .title-slide h1 {
+          font-size: 42px;
+        }
+        .title-slide .subtitle {
+          font-size: 20px;
+        }
+        .dog {
+          font-size: 70px;
+        }
+        .two-cols {
+          grid-template-columns: 1fr;
+        }
+        .dots {
+          display: none;
+        }
+        .nav {
+          padding: 8px 14px;
+        }
+        .nav button {
+          width: 38px;
+          height: 38px;
+          font-size: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <div class="stage" id="stage">
+      <!-- ===== 1. ТИТУЛЬНЫЙ ===== -->
+      <section class="slide title-slide">
+        <div class="dog">🐕</div>
+        <h1>Терминал и Bash</h1>
+        <p class="subtitle">верный пёс программиста</p>
+        <p class="meta">МДК.02.01 — Инструментальные средства разработки ПО</p>
+      </section>
+
+      <!-- ===== 2. ЗАЧЕМ КОМАНДНАЯ СТРОКА ===== -->
+      <section class="slide">
+        <h2>Зачем нужна командная строка?</h2>
+        <div class="two-cols">
+          <div>
+            <h3>🖱️ Мышкой</h3>
+            <ol>
+              <li>Открыть папку</li>
+              <li>Найти файл</li>
+              <li>ПКМ → Копировать</li>
+              <li>Открыть другую папку</li>
+              <li>ПКМ → Вставить</li>
+            </ol>
+            <p><strong>≈ 8 секунд</strong></p>
+          </div>
+          <div>
+            <h3>⌨️ Через Bash</h3>
+            <pre><code><span class="cmd">cp</span> file1 file2</code></pre>
+            <p><strong>≈ 2 секунды</strong></p>
+          </div>
+        </div>
+        <div class="tip tip-info">
+          💡 Один файл — экономия 6 секунд. А если их тысяча?
+        </div>
+      </section>
+
+      <!-- ===== 3. ЧТО ТАКОЕ BASH ===== -->
+      <section class="slide">
+        <h2>Что такое Bash?</h2>
+        <p><strong>Bash</strong> = <em>Bourne-Again Shell</em></p>
+        <p>
+          Каламбур: «Bourne Again» звучит как «Born Again» —
+          <em>рождённый заново</em>.
+        </p>
+        <p>
+          Bourne — фамилия разработчика первого популярного shell для Unix
+          (1978).
+        </p>
+        <h3>Кто он в системе?</h3>
+        <p>
+          Bash — это <strong>интерпретатор команд</strong>: переводит твой текст
+          в понятные системе команды и возвращает ответ.
+        </p>
+        <div class="tip tip-info">
+          🧠 Аналогия: переводчик между тобой и операционной системой.
+        </div>
+      </section>
+
+      <!-- ===== 4. ПЁС ===== -->
+      <section class="slide">
+        <h2>Bash — это верный пёс 🐕</h2>
+        <ul>
+          <li>
+            🐾 <strong>Неприхотлив</strong> — работает на Linux, macOS, Windows
+            (через WSL)
+          </li>
+          <li>
+            🐾 <strong>Умный</strong> — одна команда заменяет десять кликов
+          </li>
+          <li>
+            🐾 <strong>Работящий</strong> — обработает 1000 файлов и не
+            пожалуется
+          </li>
+          <li>
+            🐾 <strong>Не всегда красивый</strong> — чёрное окно с текстом, и
+            это нормально
+          </li>
+        </ul>
+        <div class="tip tip-warn">
+          ⚠️ Хвостиком не виляет. Ошибёшься — холодно ответит:
+          <code>command not found</code>.
+        </div>
+      </section>
+
+      <!-- ===== 5. ФАЙЛОВАЯ СИСТЕМА ===== -->
+      <section class="slide">
+        <h2>Файловая система Linux</h2>
+        <p>В Windows путь: <code>C:\Users\Name\Documents</code></p>
+        <p>
+          В Linux корень один — <code>/</code>. Всё висит на нём, как дерево
+          корнями вверх.
+        </p>
+        <h3>Три символа, которые надо запомнить</h3>
+        <table>
+          <tr>
+            <th>Символ</th>
+            <th>Что значит</th>
+            <th>Аналогия</th>
+          </tr>
+          <tr>
+            <td><code>/</code></td>
+            <td>Корень, начало всего</td>
+            <td>Центр Земли</td>
+          </tr>
+          <tr>
+            <td><code>~</code></td>
+            <td>Твоя домашняя папка</td>
+            <td>Твоя комната</td>
+          </tr>
+          <tr>
+            <td><code>..</code></td>
+            <td>Уровень выше</td>
+            <td>Выйти в коридор</td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- ===== 6. НАВИГАЦИЯ ===== -->
+      <section class="slide">
+        <h2>Навигация: pwd, ls, cd</h2>
+        <pre><code><span class="cmd">pwd</span>          <span class="cmt"># Где я? (Print Working Directory)</span>
+<span class="cmd">ls</span>           <span class="cmt"># Что тут лежит?</span>
+<span class="cmd">cd</span> /tmp      <span class="cmt"># Перейти в /tmp</span>
+<span class="cmd">cd</span> ~         <span class="cmt"># Домой</span>
+<span class="cmd">cd</span> ..        <span class="cmt"># На шаг назад</span>
+<span class="cmd">cd</span> -         <span class="cmt"># Вернуться туда, где был только что</span></code></pre>
+        <div class="tip tip-good">
+          💊 <code>cd -</code> — таблетка от «ой, не туда зашёл».
+        </div>
+      </section>
+
+      <!-- ===== 7. ФАЙЛЫ ===== -->
+      <section class="slide">
+        <h2>Четыре всадника работы с файлами</h2>
+        <table>
+          <tr>
+            <th>Команда</th>
+            <th>Что делает</th>
+            <th>Опасность</th>
+          </tr>
+          <tr>
+            <td><code>mkdir</code></td>
+            <td>Создать папку</td>
+            <td>Низкая</td>
+          </tr>
+          <tr>
+            <td><code>touch</code></td>
+            <td>Создать пустой файл</td>
+            <td>Низкая</td>
+          </tr>
+          <tr>
+            <td><code>cp</code></td>
+            <td>Копировать</td>
+            <td>Средняя</td>
+          </tr>
+          <tr>
+            <td><code>mv</code></td>
+            <td>Переместить / переименовать</td>
+            <td>Средняя</td>
+          </tr>
+          <tr>
+            <td><code>rm</code></td>
+            <td>Удалить</td>
+            <td><strong style="color: #f38ba8">ВЫСОКАЯ</strong></td>
+          </tr>
+        </table>
+        <div class="tip tip-warn">
+          ⚠️ В Linux нет корзины! <code>rm</code> удаляет навсегда.
+        </div>
+      </section>
+
+      <!-- ===== 8. ПРИМЕРЫ ФАЙЛОВЫХ КОМАНД ===== -->
+      <section class="slide">
+        <h2>Файлы на практике</h2>
+        <pre><code><span class="cmd">mkdir</span> demo                          <span class="cmt"># создать папку demo</span>
+<span class="cmd">touch</span> demo/hello.txt                <span class="cmt"># создать пустой файл</span>
+<span class="cmd">cp</span> demo/hello.txt demo/copy.txt     <span class="cmt"># скопировать</span>
+<span class="cmd">mv</span> demo/copy.txt demo/renamed.txt   <span class="cmt"># переименовать</span>
+<span class="cmd">rm</span> demo/hello.txt                   <span class="cmt"># удалить файл</span>
+<span class="cmd">rm</span> -r demo                          <span class="cmt"># удалить папку (-r = рекурсивно)</span></code></pre>
+      </section>
+
+      <!-- ===== 9. TAB И ИСТОРИЯ ===== -->
+      <section class="slide">
+        <h2>Магия Bash: Tab и история</h2>
+        <h3>🗂️ Клавиша Tab — твой второй мозг</h3>
+        <pre><code><span class="cmd">ls</span> /e&lt;Tab&gt;            <span class="cmt"># автоматически станет /etc</span>
+<span class="cmd">cat</span> /etc/pass&lt;Tab&gt;    <span class="cmt"># автоматически станет /etc/passwd</span></code></pre>
+        <h3>📜 История команд</h3>
+        <table>
+          <tr>
+            <th>Действие</th>
+            <th>Что делает</th>
+          </tr>
+          <tr>
+            <td>↑ / ↓</td>
+            <td>Листать историю</td>
+          </tr>
+          <tr>
+            <td><code>history</code></td>
+            <td>Показать всю историю</td>
+          </tr>
+          <tr>
+            <td><code>!n</code></td>
+            <td>Выполнить команду №n</td>
+          </tr>
+          <tr>
+            <td><code>Ctrl + R</code></td>
+            <td>Поиск по истории</td>
+          </tr>
+        </table>
+        <div class="tip tip-good">
+          💡 <code>Ctrl+R</code> — привычка с первого дня.
+        </div>
+      </section>
+
+      <!-- ===== 10. WILDCARDS ===== -->
+      <section class="slide">
+        <h2>Wildcards (звёздочки) — массовое оружие</h2>
+        <pre><code><span class="cmd">ls</span> *.txt          <span class="cmt"># все .txt файлы в папке</span>
+<span class="cmd">rm</span> photo_*.jpg    <span class="cmt"># удалить все jpg, начинающиеся с photo_</span>
+<span class="cmd">cp</span> main* /backup/ <span class="cmt"># скопировать всё, что начинается с main</span></code></pre>
+        <div class="tip tip-info">
+          ⭐ Одна звёздочка заменяет сто копипастов.
+        </div>
+      </section>
+
+      <!-- ===== 11. ПОТОКИ ===== -->
+      <section class="slide">
+        <h2>Три «потока» каждого процесса</h2>
+        <table>
+          <tr>
+            <th>Номер</th>
+            <th>Имя</th>
+            <th>Что это</th>
+          </tr>
+          <tr>
+            <td>0</td>
+            <td>stdin</td>
+            <td>Ввод</td>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td>stdout</td>
+            <td>Обычный вывод</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>stderr</td>
+            <td>Вывод ошибок</td>
+          </tr>
+        </table>
+        <h3>Перенаправление</h3>
+        <pre><code><span class="cmd">echo</span> "Hello" &gt; out.txt      <span class="cmt"># записать (перезапишет)</span>
+<span class="cmd">echo</span> "World" &gt;&gt; out.txt     <span class="cmt"># дописать в конец</span>
+<span class="cmd">ls</span> /nonexistent 2&gt; err.txt  <span class="cmt"># ошибки — в отдельный файл</span></code></pre>
+      </section>
+
+      <!-- ===== 12. КОНВЕЙЕР ===== -->
+      <section class="slide">
+        <h2>Конвейер: <code>|</code></h2>
+        <p>
+          Смысл: <strong>вывод левой команды становится вводом правой</strong>.
+        </p>
+        <pre><code><span class="cmd">cat</span> file.txt | <span class="cmd">grep</span> "error" | <span class="cmd">wc</span> -l</code></pre>
+        <p>Перевод на человеческий:</p>
+        <ol>
+          <li>Прочитать файл</li>
+          <li>Найти строки со словом «error»</li>
+          <li>Посчитать, сколько их</li>
+        </ol>
+        <div class="tip tip-info">
+          🎯 Три команды, соединённые в одну строку. Это и есть сила Bash.
+        </div>
+      </section>
+
+      <!-- ===== 13. СЕТЬ ===== -->
+      <section class="slide">
+        <h2>Сетевые команды — шпаргалка</h2>
+        <table>
+          <tr>
+            <th>Команда</th>
+            <th>Зачем</th>
+            <th>Пример</th>
+          </tr>
+          <tr>
+            <td><code>ping</code></td>
+            <td>Проверить связь</td>
+            <td><code>ping google.com</code></td>
+          </tr>
+          <tr>
+            <td><code>ssh</code></td>
+            <td>Подключиться к серверу</td>
+            <td><code>ssh user@192.168.1.10</code></td>
+          </tr>
+          <tr>
+            <td><code>scp</code></td>
+            <td>Передать файл</td>
+            <td><code>scp file.txt user@host:/path/</code></td>
+          </tr>
+          <tr>
+            <td><code>curl</code></td>
+            <td>HTTP-запросы</td>
+            <td><code>curl -O https://example.com/file</code></td>
+          </tr>
+          <tr>
+            <td><code>wget</code></td>
+            <td>Скачать файл</td>
+            <td><code>wget https://example.com/file</code></td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- ===== 14. ПРАКТИКА 1 ===== -->
+      <section class="slide">
+        <h2>Практика в классе (повторяем за мной)</h2>
+        <h3>Раунд 1: осмотреться</h3>
+        <pre><code><span class="cmd">pwd</span>
+<span class="cmd">ls</span> -la
+<span class="cmd">cd</span> /tmp
+<span class="cmd">pwd</span>
+<span class="cmd">cd</span> -
+<span class="cmd">cd</span> ~</code></pre>
+        <h3>Раунд 2: что-нибудь создать</h3>
+        <pre><code><span class="cmd">mkdir</span> bash_demo
+<span class="cmd">cd</span> bash_demo
+<span class="cmd">touch</span> a.txt b.txt c.txt
+<span class="cmd">mkdir</span> subdir
+<span class="cmd">mv</span> a.txt subdir/
+<span class="cmd">cp</span> b.txt subdir/b_backup.txt
+<span class="cmd">rm</span> c.txt
+<span class="cmd">ls</span> -R</code></pre>
+      </section>
+
+      <!-- ===== 15. ПРАКТИКА 2 ===== -->
+      <section class="slide">
+        <h2>Практика: продолжаем</h2>
+        <h3>Раунд 3: почувствовать мощь</h3>
+        <pre><code><span class="cmd">cd</span> ~
+<span class="cmd">history</span> | <span class="cmd">tail</span> -5
+<span class="cmt"># попробуйте Ctrl+R и найдите свою mkdir</span>
+<span class="cmd">echo</span> "line1" &gt; test.txt
+<span class="cmd">echo</span> "line2" &gt;&gt; test.txt
+<span class="cmd">cat</span> test.txt
+<span class="cmd">cat</span> test.txt | <span class="cmd">wc</span> -l</code></pre>
+        <h3>Раунд 4: сеть</h3>
+        <pre><code><span class="cmd">ping</span> -c 4 127.0.0.1
+<span class="cmd">curl</span> -I https://example.com</code></pre>
+      </section>
+
+      <!-- ===== 16. ДОМАШКА ===== -->
+      <section class="slide">
+        <h2>Домашка — «собачий корм» на закрепление</h2>
+        <ol>
+          <li>
+            Своими словами объясни: чем <strong>Bash</strong> отличается от
+            <strong>терминала</strong>?<br /><span
+              style="color: #6c7086; font-size: 17px"
+              >Подсказка: один — собака, второй — дверь в будку.</span
+            >
+          </li>
+          <li>
+            Найди у себя папку, где больше 50 файлов, и посчитай их количество
+            через Bash.
+          </li>
+          <li>
+            Подготовься к следующей теме: что делают <code>chmod</code> и
+            <code>chown</code>? Почему на серверах это критично?
+          </li>
+        </ol>
+      </section>
+
+      <!-- ===== 17. ФИНАЛ ===== -->
+      <section class="slide title-slide">
+        <div class="dog">🐕</div>
+        <h1>Bash — твой верный пёс</h1>
+        <p class="subtitle">Дрессируй его каждый день</p>
+        <p class="meta">Спасибо за внимание!</p>
+      </section>
+    </div>
+
+    <!-- ===== НАВИГАЦИЯ ===== -->
+    <div class="nav">
+      <button id="btnPrev" title="Назад (←)">‹</button>
+      <div class="counter"><b id="cur">1</b> / <span id="total">17</span></div>
+      <button id="btnNext" title="Вперёд (→)">›</button>
+    </div>
+
+    <div class="dots" id="dots"></div>
+
+    <script>
+      const slides = document.querySelectorAll(".slide");
+      const total = slides.length;
+      let current = 0;
+
+      const btnPrev = document.getElementById("btnPrev");
+      const btnNext = document.getElementById("btnNext");
+      const curLabel = document.getElementById("cur");
+      const totalLabel = document.getElementById("total");
+      const progressBar = document.getElementById("progressBar");
+      const dotsWrap = document.getElementById("dots");
+
+      totalLabel.textContent = total;
+
+      // Генерим точки-индикаторы
+      slides.forEach((_, i) => {
+        const d = document.createElement("div");
+        d.className = "dot" + (i === 0 ? " active" : "");
+        d.title = "Слайд " + (i + 1);
+        d.addEventListener("click", () => goTo(i));
+        dotsWrap.appendChild(d);
+      });
+      const dots = document.querySelectorAll(".dot");
+
+      function render() {
+        slides.forEach((s, i) => {
+          s.classList.remove("active", "prev");
+          if (i === current) s.classList.add("active");
+          else if (i < current) s.classList.add("prev");
+        });
+        dots.forEach((d, i) => d.classList.toggle("active", i === current));
+
+        curLabel.textContent = current + 1;
+        btnPrev.disabled = current === 0;
+        btnNext.disabled = current === total - 1;
+
+        const pct = ((current + 1) / total) * 100;
+        progressBar.style.width = pct + "%";
+      }
+
+      function next() {
+        if (current < total - 1) {
+          current++;
+          render();
+        }
+      }
+      function prev() {
+        if (current > 0) {
+          current--;
+          render();
+        }
+      }
+      function goTo(i) {
+        current = i;
+        render();
+      }
+
+      btnNext.addEventListener("click", next);
+      btnPrev.addEventListener("click", prev);
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
+          e.preventDefault();
+          next();
+        } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+          e.preventDefault();
+          prev();
+        } else if (e.key === "Home") {
+          goTo(0);
+        } else if (e.key === "End") {
+          goTo(total - 1);
+        } else if (e.key === "f" || e.key === "F") {
+          if (!document.fullscreenElement)
+            document.documentElement.requestFullscreen();
+          else document.exitFullscreen();
+        }
+      });
+
+      // Свайпы на мобилке
+      let touchStartX = 0;
+      document.addEventListener(
+        "touchstart",
+        (e) => (touchStartX = e.changedTouches[0].screenX)
+      );
+      document.addEventListener("touchend", (e) => {
+        const dx = e.changedTouches[0].screenX - touchStartX;
+        if (Math.abs(dx) > 60) {
+          dx < 0 ? next() : prev();
+        }
+      });
+
+      // Клик по полю (не по кнопкам)
+      document.getElementById("stage").addEventListener("click", (e) => {
+        if (e.target.closest(".nav") || e.target.closest(".dots")) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        x < rect.width / 3 ? prev() : x > (rect.width * 2) / 3 ? next() : null;
+      });
+
+      render();
+    </script>
+  </body>
+</html>
