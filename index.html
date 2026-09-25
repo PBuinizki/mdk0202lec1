@@ -1,995 +1,1296 @@
 <!DOCTYPE html>
 <html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Терминал и Bash — верный пёс программиста</title>
-    <style>
-      /* ============ БАЗА ============ */
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Композиция и пространство в дизайне</title>
+<style>
+/* ============ RESET ============ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-      :root {
-        --bg: #1e1e2e;
-        --bg2: #181825;
-        --panel: #313244;
-        --text: #cdd6f4;
-        --text-dim: #6c7086;
-        --yellow: #f9e2af;
-        --blue: #89b4fa;
-        --cyan: #89dceb;
-        --green: #a6e3a1;
-        --red: #f38ba8;
-        --orange: #fab387;
-      }
+/* ============ FONTS ============ */
+@font-face {
+  font-family: 'SFE';
+  src: local('SF Pro Display'), local('SF Pro'), local('-apple-system'),
+       local('BlinkMacSystemFont'), local('Helvetica Neue'), local('Arial');
+}
+:root {
+  --bg: #f5f5f7;
+  --card: #ffffff;
+  --text: #1d1d1f;
+  --text-2: #6e6e73;
+  --text-3: #86868b;
+  --accent: #0071e3;
+  --accent-2: #2997ff;
+  --accent-soft: #e8f0fe;
+  --green: #34c759;
+  --orange: #ff9500;
+  --red: #ff3b30;
+  --purple: #af52de;
+  --border: #d2d2d7;
+  --border-2: #e8e8ed;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,0.10), 0 8px 20px rgba(0,0,0,0.06);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+}
 
-      html,
-      body {
-        height: 100%;
-        overflow: hidden;
-        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-        background: radial-gradient(ellipse at top, #2a2a3e 0%, #11111b 100%);
-        color: var(--text);
-      }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+}
 
-      /* ============ СЦЕНА ============ */
-      .stage {
-        position: relative;
-        width: 100vw;
-        height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        perspective: 1600px;
-      }
+/* ============ CAROUSEL ============ */
+.carousel {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
 
-      /* ============ СЛАЙД ============ */
-      .slide {
-        position: absolute;
-        width: min(92vw, 1200px);
-        height: min(88vh, 700px);
-        background: linear-gradient(160deg, #1e1e2e 0%, #262637 100%);
-        border-radius: 22px;
-        padding: 50px 65px;
-        overflow-y: auto;
-        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6),
-          0 0 0 1px rgba(137, 180, 250, 0.15),
-          inset 0 1px 0 rgba(255, 255, 255, 0.05);
+.slides-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
 
-        opacity: 0;
-        transform: translateX(120%) scale(0.85) rotateY(-25deg);
-        transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-          opacity 0.5s ease;
-        pointer-events: none;
-        will-change: transform, opacity;
-      }
+.slide {
+  min-width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 64px 80px;
+  overflow-y: auto;
+  position: relative;
+}
 
-      .slide.active {
-        opacity: 1;
-        transform: translateX(0) scale(1) rotateY(0);
-        pointer-events: auto;
-        z-index: 2;
-      }
+/* ============ SLIDE TYPES ============ */
 
-      .slide.prev {
-        opacity: 0;
-        transform: translateX(-120%) scale(0.85) rotateY(25deg);
-      }
+/* --- Title slide --- */
+.slide-title {
+  flex-direction: column;
+  gap: 24px;
+  text-align: center;
+}
+.slide-title .badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 980px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.slide-title h1 {
+  font-size: clamp(40px, 6vw, 72px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  background: linear-gradient(135deg, var(--text) 0%, #555 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.slide-title p {
+  font-size: clamp(18px, 2.2vw, 26px);
+  color: var(--text-2);
+  max-width: 720px;
+}
+.slide-title .meta {
+  margin-top: 16px;
+  font-size: 15px;
+  color: var(--text-3);
+}
 
-      /* Скроллбар внутри слайда */
-      .slide::-webkit-scrollbar {
-        width: 8px;
-      }
-      .slide::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      .slide::-webkit-scrollbar-thumb {
-        background: rgba(137, 180, 250, 0.3);
-        border-radius: 4px;
-      }
+/* --- Section title --- */
+.slide-section h2 {
+  font-size: clamp(32px, 4.5vw, 56px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+.slide-section .subtitle {
+  font-size: clamp(16px, 1.8vw, 22px);
+  color: var(--text-2);
+  max-width: 760px;
+  margin-bottom: 32px;
+}
 
-      /* ============ ТИПОГРАФИКА ============ */
-      h1 {
-        font-size: 58px;
-        font-weight: 800;
-        color: var(--yellow);
-        line-height: 1.1;
-        margin-bottom: 25px;
-        letter-spacing: -0.5px;
-      }
-      h2 {
-        font-size: 38px;
-        font-weight: 700;
-        color: var(--yellow);
-        margin-bottom: 25px;
-        letter-spacing: -0.3px;
-        position: relative;
-        padding-bottom: 15px;
-      }
-      h2::after {
-        content: "";
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        width: 70px;
-        height: 4px;
-        background: linear-gradient(90deg, var(--blue), var(--cyan));
-        border-radius: 2px;
-      }
-      h3 {
-        font-size: 24px;
-        color: var(--cyan);
-        margin: 20px 0 12px;
-        font-weight: 600;
-      }
-      p,
-      li {
-        font-size: 21px;
-        line-height: 1.6;
-        color: var(--text);
-        margin-bottom: 10px;
-      }
-      strong {
-        color: var(--orange);
-        font-weight: 700;
-      }
-      em {
-        color: var(--cyan);
-        font-style: italic;
-      }
-      ul,
-      ol {
-        margin-left: 28px;
-        margin-bottom: 10px;
-      }
-      li {
-        margin-bottom: 8px;
-      }
+/* --- Content slide --- */
+.slide-content {
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 1120px;
+  width: 100%;
+}
+.slide-content h2 {
+  font-size: clamp(28px, 3.5vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.slide-content .lead {
+  font-size: clamp(15px, 1.5vw, 19px);
+  color: var(--text-2);
+  margin-bottom: 28px;
+}
 
-      /* ============ КОД ============ */
-      code {
-        background: rgba(137, 180, 250, 0.12);
-        color: var(--green);
-        padding: 3px 9px;
-        border-radius: 6px;
-        font-family: "JetBrains Mono", "Consolas", "Menlo", monospace;
-        font-size: 0.92em;
-        border: 1px solid rgba(137, 180, 250, 0.15);
-      }
-      pre {
-        background: #11111b;
-        border-left: 4px solid var(--blue);
-        padding: 18px 22px;
-        border-radius: 10px;
-        overflow-x: auto;
-        margin: 15px 0;
-        box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4);
-      }
-      pre code {
-        background: transparent;
-        border: none;
-        padding: 0;
-        color: var(--text);
-        font-size: 18px;
-        line-height: 1.7;
-        display: block;
-        white-space: pre;
-      }
-      .cmt {
-        color: var(--text-dim);
-        font-style: italic;
-      }
-      .cmd {
-        color: var(--green);
-      }
-      .var {
-        color: var(--yellow);
-      }
+/* ============ CARDS ============ */
+.card {
+  background: var(--card);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+.card-lg {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-md);
+}
 
-      /* ============ ТАБЛИЦЫ ============ */
-      table {
-        border-collapse: collapse;
-        width: 100%;
-        margin: 15px 0;
-        font-size: 19px;
-        border-radius: 10px;
-        overflow: hidden;
-      }
-      th {
-        background: var(--panel);
-        color: var(--yellow);
-        padding: 12px 18px;
-        text-align: left;
-        border-bottom: 2px solid var(--blue);
-        font-weight: 700;
-      }
-      td {
-        padding: 10px 18px;
-        border-bottom: 1px solid rgba(108, 112, 134, 0.25);
-        color: var(--text);
-      }
-      tr:last-child td {
-        border-bottom: none;
-      }
-      tbody tr:hover {
-        background: rgba(137, 180, 250, 0.05);
-      }
+/* ============ GRID HELPERS ============ */
+.row { display: flex; gap: 24px; flex-wrap: wrap; align-items: stretch; }
+.col { display: flex; flex-direction: column; gap: 16px; }
+.grow { flex: 1; min-width: 0; }
 
-      /* ============ ПЛАШКИ ============ */
-      .tip {
-        display: block;
-        padding: 14px 22px;
-        border-radius: 10px;
-        font-size: 19px;
-        margin-top: 20px;
-        line-height: 1.5;
-        animation: pulse 3s ease-in-out infinite;
-      }
-      @keyframes pulse {
-        0%,
-        100% {
-          transform: translateY(0);
-        }
-        50% {
-          transform: translateY(-3px);
-        }
-      }
-      .tip-info {
-        background: rgba(137, 180, 250, 0.12);
-        border-left: 5px solid var(--blue);
-        color: var(--text);
-      }
-      .tip-warn {
-        background: rgba(243, 139, 168, 0.12);
-        border-left: 5px solid var(--red);
-        color: #f8d7da;
-      }
-      .tip-good {
-        background: rgba(166, 227, 161, 0.12);
-        border-left: 5px solid var(--green);
-        color: #d4f5d4;
-      }
+/* ============ SPACING DEMO ============ */
+.spacing-scale {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 120px;
+  padding: 16px;
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.spacing-bar {
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, var(--accent-2), var(--accent));
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 48px;
+}
 
-      /* ============ 2 КОЛОНКИ ============ */
-      .two-cols {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 30px;
-      }
-      .two-cols > div {
-        background: rgba(49, 50, 68, 0.5);
-        padding: 20px;
-        border-radius: 12px;
-        border: 1px solid rgba(137, 180, 250, 0.1);
-      }
+/* ============ PROXIMITY DEMO ============ */
+.proximity-demo {
+  display: flex;
+  gap: 48px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.proximity-group {
+  display: flex;
+  gap: 4px;
+}
+.proximity-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.proximity-dot.gray { background: var(--text-3); opacity: 0.3; }
+.proximity-label {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--text-2);
+  font-weight: 500;
+}
 
-      /* ============ ТИТУЛЬНЫЙ ============ */
-      .title-slide {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        background: linear-gradient(
-          135deg,
-          #1e1e2e 0%,
-          #313244 60%,
-          #1e1e2e 100%
-        );
-      }
-      .title-slide h1 {
-        font-size: 68px;
-        margin-bottom: 15px;
-      }
-      .title-slide .subtitle {
-        font-size: 28px;
-        color: var(--cyan);
-        margin-bottom: 30px;
-      }
-      .title-slide .meta {
-        color: var(--text-dim);
-        font-size: 18px;
-      }
-      .dog {
-        font-size: 110px;
-        margin-bottom: 20px;
-        display: inline-block;
-        animation: wag 1.5s ease-in-out infinite;
-      }
-      @keyframes wag {
-        0%,
-        100% {
-          transform: rotate(-8deg) scale(1);
-        }
-        50% {
-          transform: rotate(8deg) scale(1.08);
-        }
-      }
+/* ============ RADIUS DEMO ============ */
+.radius-demo {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.radius-outer {
+  border: 2.5px solid var(--accent);
+  padding: 24px;
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+.radius-inner {
+  background: var(--accent-soft);
+  border-radius: 12px;
+  padding: 20px 28px;
+  font-size: 14px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.radius-arrow {
+  font-size: 24px;
+  color: var(--text-3);
+}
+.radius-formula {
+  background: var(--card);
+  border-radius: var(--radius-md);
+  padding: 20px 28px;
+  box-shadow: var(--shadow-sm);
+  font-size: 16px;
+  text-align: center;
+}
+.radius-formula code {
+  background: var(--bg);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 14px;
+  color: var(--accent);
+}
 
-      /* ============ НАВИГАЦИЯ ============ */
-      .nav {
-        position: fixed;
-        bottom: 25px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 14px;
-        align-items: center;
-        background: rgba(24, 24, 37, 0.9);
-        backdrop-filter: blur(12px);
-        padding: 10px 20px;
-        border-radius: 50px;
-        border: 1px solid rgba(137, 180, 250, 0.2);
-        z-index: 100;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-      }
-      .nav button {
-        background: rgba(137, 180, 250, 0.15);
-        border: none;
-        color: var(--blue);
-        font-size: 22px;
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        cursor: pointer;
-        transition: all 0.25s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-      }
-      .nav button:hover:not(:disabled) {
-        background: var(--blue);
-        color: var(--bg);
-        transform: scale(1.1);
-      }
-      .nav button:disabled {
-        opacity: 0.25;
-        cursor: not-allowed;
-      }
-      .counter {
-        font-family: "JetBrains Mono", monospace;
-        font-size: 15px;
-        color: var(--text);
-        min-width: 70px;
-        text-align: center;
-        letter-spacing: 1px;
-      }
-      .counter b {
-        color: var(--yellow);
-      }
+/* ============ Z-PATTERN DEMO ============ */
+.z-demo {
+  position: relative;
+  width: 480px;
+  height: 300px;
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+}
+.z-box {
+  position: absolute;
+  border-radius: var(--radius-sm);
+}
+.z-box.z1 { top: 24px; left: 24px; width: 80px; height: 40px; background: #ffcc00; }
+.z-box.z2 { top: 24px; right: 24px; width: 80px; height: 40px; background: #ff9500; }
+.z-box.z3 { bottom: 24px; left: 24px; width: 80px; height: 40px; background: var(--accent); }
+.z-box.z4 { bottom: 24px; right: 24px; width: 80px; height: 40px; background: var(--green); }
+.z-line {
+  position: absolute;
+  height: 3px;
+  background: var(--red);
+  transform-origin: left center;
+  border-radius: 2px;
+  z-index: 5;
+}
 
-      /* ============ ИНДИКАТОР ПРОГРЕССА ============ */
-      .progress-bar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 3px;
-        background: linear-gradient(
-          90deg,
-          var(--blue),
-          var(--cyan),
-          var(--green)
-        );
-        transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-        z-index: 200;
-        box-shadow: 0 0 15px rgba(137, 180, 250, 0.6);
-      }
+/* ============ F-PATTERN DEMO ============ */
+.f-demo {
+  width: 480px;
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.f-bar {
+  height: 16px;
+  border-radius: 8px;
+  background: var(--border-2);
+}
+.f-bar.h1 { width: 90%; background: var(--accent); height: 28px; }
+.f-bar.h2 { width: 70%; background: var(--accent-2); opacity: 0.7; height: 22px; }
+.f-bar.h3 { width: 85%; background: var(--border); }
+.f-bar.h4 { width: 60%; }
+.f-bar.h5 { width: 80%; }
 
-      /* ============ ТОЧКИ-ИНДИКАТОРЫ ============ */
-      .dots {
-        position: fixed;
-        bottom: 25px;
-        right: 30px;
-        display: flex;
-        flex-direction: column;
-        gap: 7px;
-        z-index: 100;
-      }
-      .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: rgba(137, 180, 250, 0.25);
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-      .dot:hover {
-        background: var(--cyan);
-        transform: scale(1.4);
-      }
-      .dot.active {
-        background: var(--yellow);
-        transform: scale(1.5);
-        box-shadow: 0 0 10px var(--yellow);
-      }
+/* ============ HERO EYE FLOW ============ */
+.hero-demo {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.hero-card {
+  width: 420px;
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.hero-img {
+  width: 100%;
+  height: 180px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 40px;
+}
+.hero-title { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+.hero-btn {
+  display: inline-block;
+  padding: 12px 28px;
+  border-radius: 980px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+}
+.hero-sub { font-size: 14px; color: var(--text-2); }
 
-      /* ============ АНИМАЦИИ СОДЕРЖИМОГО ============ */
-      .slide.active > * {
-        animation: fadeUp 0.6s ease backwards;
-      }
-      .slide.active > *:nth-child(1) {
-        animation-delay: 0.15s;
-      }
-      .slide.active > *:nth-child(2) {
-        animation-delay: 0.25s;
-      }
-      .slide.active > *:nth-child(3) {
-        animation-delay: 0.35s;
-      }
-      .slide.active > *:nth-child(4) {
-        animation-delay: 0.45s;
-      }
-      .slide.active > *:nth-child(5) {
-        animation-delay: 0.55s;
-      }
-      .slide.active > *:nth-child(6) {
-        animation-delay: 0.65s;
-      }
-      .slide.active > *:nth-child(7) {
-        animation-delay: 0.75s;
-      }
+.eye-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.eye-step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--card);
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  box-shadow: var(--shadow-sm);
+}
+.eye-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.eye-step p { font-size: 15px; color: var(--text); }
 
-      @keyframes fadeUp {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
+/* ============ GRID DEMOS ============ */
+.grid-demo {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  max-width: 640px;
+}
+.grid-item {
+  background: var(--accent-soft);
+  border: 1.5px solid var(--accent-2);
+  border-radius: 10px;
+  padding: 16px;
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 600;
+  text-align: center;
+}
+.grid-12 { grid-template-columns: repeat(12, 1fr); }
+.grid-12 .grid-item { padding: 10px 4px; font-size: 11px; }
+.grid-auto { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+.grid-named {
+  grid-template-columns: 200px 1fr 1fr;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "header header header"
+    "sidebar main main"
+    "footer footer footer";
+}
+.grid-named .gi-header { grid-area: header; background: #d4e8fc; border-color: var(--accent-2); }
+.grid-named .gi-sidebar { grid-area: sidebar; background: #fce4d4; border-color: var(--orange); color: var(--orange); }
+.grid-named .gi-main { grid-area: main; background: #d4fce4; border-color: var(--green); color: var(--green); min-height: 120px; }
+.grid-named .gi-footer { grid-area: footer; background: #f0d4fc; border-color: var(--purple); color: var(--purple); }
 
-      /* ============ АДАПТИВ ============ */
-      @media (max-width: 900px) {
-        .slide {
-          padding: 30px 28px;
-          height: 92vh;
-        }
-        h1 {
-          font-size: 36px;
-        }
-        h2 {
-          font-size: 26px;
-        }
-        h3 {
-          font-size: 19px;
-        }
-        p,
-        li {
-          font-size: 16px;
-        }
-        pre code {
-          font-size: 14px;
-        }
-        table {
-          font-size: 15px;
-        }
-        .tip {
-          font-size: 15px;
-        }
-        .title-slide h1 {
-          font-size: 42px;
-        }
-        .title-slide .subtitle {
-          font-size: 20px;
-        }
-        .dog {
-          font-size: 70px;
-        }
-        .two-cols {
-          grid-template-columns: 1fr;
-        }
-        .dots {
-          display: none;
-        }
-        .nav {
-          padding: 8px 14px;
-        }
-        .nav button {
-          width: 38px;
-          height: 38px;
-          font-size: 18px;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="progress-bar" id="progressBar"></div>
+.flex-demo {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 20px;
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+}
+.flex-child {
+  padding: 16px 24px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  border: 1.5px solid var(--accent-2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
 
-    <div class="stage" id="stage">
-      <!-- ===== 1. ТИТУЛЬНЫЙ ===== -->
-      <section class="slide title-slide">
-        <div class="dog">🐕</div>
-        <h1>Терминал и Bash</h1>
-        <p class="subtitle">верный пёс программиста</p>
-        <p class="meta">МДК.02.01 — Инструментальные средства разработки ПО</p>
-      </section>
+/* ============ WHITESPACE DEMO ============ */
+.whitespace-compare {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.ws-card {
+  width: 320px;
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+}
+.ws-card.spacious {
+  padding: 40px;
+  box-shadow: var(--shadow-md);
+}
+.ws-card h4 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.ws-card p { font-size: 14px; color: var(--text-2); }
+.ws-tag {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 4px 12px;
+  border-radius: 980px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.ws-tag.bad { background: #ffeaea; color: var(--red); }
+.ws-tag.good { background: #e8f8ed; color: var(--green); }
 
-      <!-- ===== 2. ЗАЧЕМ КОМАНДНАЯ СТРОКА ===== -->
-      <section class="slide">
-        <h2>Зачем нужна командная строка?</h2>
-        <div class="two-cols">
-          <div>
-            <h3>🖱️ Мышкой</h3>
-            <ol>
-              <li>Открыть папку</li>
-              <li>Найти файл</li>
-              <li>ПКМ → Копировать</li>
-              <li>Открыть другую папку</li>
-              <li>ПКМ → Вставить</li>
-            </ol>
-            <p><strong>≈ 8 секунд</strong></p>
-          </div>
-          <div>
-            <h3>⌨️ Через Bash</h3>
-            <pre><code><span class="cmd">cp</span> file1 file2</code></pre>
-            <p><strong>≈ 2 секунды</strong></p>
-          </div>
-        </div>
-        <div class="tip tip-info">
-          💡 Один файл — экономия 6 секунд. А если их тысяча?
-        </div>
-      </section>
+/* ============ FORM PSYCHOLOGY ============ */
+.form-psych {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.shape-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px;
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  width: 200px;
+  text-align: center;
+}
+.shape-card .shape { width: 80px; height: 80px; }
+.shape-card h4 { font-size: 15px; font-weight: 700; }
+.shape-card p { font-size: 13px; color: var(--text-2); }
+.shape-square { border-radius: 0; background: var(--text-2); }
+.shape-rounded { border-radius: 16px; background: var(--accent); }
+.shape-pill { border-radius: 40px; background: var(--green); }
+.shape-circle { border-radius: 50%; background: var(--orange); }
 
-      <!-- ===== 3. ЧТО ТАКОЕ BASH ===== -->
-      <section class="slide">
-        <h2>Что такое Bash?</h2>
-        <p><strong>Bash</strong> = <em>Bourne-Again Shell</em></p>
-        <p>
-          Каламбур: «Bourne Again» звучит как «Born Again» —
-          <em>рождённый заново</em>.
-        </p>
-        <p>
-          Bourne — фамилия разработчика первого популярного shell для Unix
-          (1978).
-        </p>
-        <h3>Кто он в системе?</h3>
-        <p>
-          Bash — это <strong>интерпретатор команд</strong>: переводит твой текст
-          в понятные системе команды и возвращает ответ.
-        </p>
-        <div class="tip tip-info">
-          🧠 Аналогия: переводчик между тобой и операционной системой.
-        </div>
-      </section>
+/* ============ LISTS ============ */
+.feature-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.feature-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: clamp(15px, 1.4vw, 18px);
+  color: var(--text);
+  line-height: 1.55;
+}
+.feature-list .check {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.feature-list .x {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 2px;
+}
 
-      <!-- ===== 4. ПЁС ===== -->
-      <section class="slide">
-        <h2>Bash — это верный пёс 🐕</h2>
-        <ul>
-          <li>
-            🐾 <strong>Неприхотлив</strong> — работает на Linux, macOS, Windows
-            (через WSL)
-          </li>
-          <li>
-            🐾 <strong>Умный</strong> — одна команда заменяет десять кликов
-          </li>
-          <li>
-            🐾 <strong>Работящий</strong> — обработает 1000 файлов и не
-            пожалуется
-          </li>
-          <li>
-            🐾 <strong>Не всегда красивый</strong> — чёрное окно с текстом, и
-            это нормально
-          </li>
-        </ul>
-        <div class="tip tip-warn">
-          ⚠️ Хвостиком не виляет. Ошибёшься — холодно ответит:
-          <code>command not found</code>.
-        </div>
-      </section>
+/* ============ TABLES ============ */
+.cmp-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  font-size: 15px;
+}
+.cmp-table th, .cmp-table td {
+  padding: 14px 20px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-2);
+}
+.cmp-table th {
+  background: var(--bg);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.cmp-table tr:last-child td { border-bottom: none; }
+.cmp-table tr:hover td { background: var(--bg); }
 
-      <!-- ===== 5. ФАЙЛОВАЯ СИСТЕМА ===== -->
-      <section class="slide">
-        <h2>Файловая система Linux</h2>
-        <p>В Windows путь: <code>C:\Users\Name\Documents</code></p>
-        <p>
-          В Linux корень один — <code>/</code>. Всё висит на нём, как дерево
-          корнями вверх.
-        </p>
-        <h3>Три символа, которые надо запомнить</h3>
-        <table>
-          <tr>
-            <th>Символ</th>
-            <th>Что значит</th>
-            <th>Аналогия</th>
-          </tr>
-          <tr>
-            <td><code>/</code></td>
-            <td>Корень, начало всего</td>
-            <td>Центр Земли</td>
-          </tr>
-          <tr>
-            <td><code>~</code></td>
-            <td>Твоя домашняя папка</td>
-            <td>Твоя комната</td>
-          </tr>
-          <tr>
-            <td><code>..</code></td>
-            <td>Уровень выше</td>
-            <td>Выйти в коридор</td>
-          </tr>
-        </table>
-      </section>
+/* ============ CALLOUT ============ */
+.callout {
+  background: var(--accent-soft);
+  border-radius: var(--radius-md);
+  padding: 20px 28px;
+  font-size: clamp(15px, 1.4vw, 18px);
+  color: var(--text);
+  line-height: 1.55;
+  border-left: 4px solid var(--accent);
+  margin-top: 20px;
+  max-width: 760px;
+}
+.callout strong { color: var(--accent); }
 
-      <!-- ===== 6. НАВИГАЦИЯ ===== -->
-      <section class="slide">
-        <h2>Навигация: pwd, ls, cd</h2>
-        <pre><code><span class="cmd">pwd</span>          <span class="cmt"># Где я? (Print Working Directory)</span>
-<span class="cmd">ls</span>           <span class="cmt"># Что тут лежит?</span>
-<span class="cmd">cd</span> /tmp      <span class="cmt"># Перейти в /tmp</span>
-<span class="cmd">cd</span> ~         <span class="cmt"># Домой</span>
-<span class="cmd">cd</span> ..        <span class="cmt"># На шаг назад</span>
-<span class="cmd">cd</span> -         <span class="cmt"># Вернуться туда, где был только что</span></code></pre>
-        <div class="tip tip-good">
-          💊 <code>cd -</code> — таблетка от «ой, не туда зашёл».
-        </div>
-      </section>
+/* ============ MISC ============ */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  width: 100%;
+  max-width: 1000px;
+  align-items: start;
+}
+.two-col-narrow {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 32px;
+  width: 100%;
+  align-items: start;
+}
+.center-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+}
+.tag-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.tag {
+  padding: 6px 14px;
+  border-radius: 980px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--bg);
+  color: var(--text-2);
+  border: 1px solid var(--border-2);
+}
+.tag.blue { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.tag.green { background: #e8f8ed; color: var(--green); border-color: transparent; }
+.tag.orange { background: #fff4e6; color: var(--orange); border-color: transparent; }
 
-      <!-- ===== 7. ФАЙЛЫ ===== -->
-      <section class="slide">
-        <h2>Четыре всадника работы с файлами</h2>
-        <table>
-          <tr>
-            <th>Команда</th>
-            <th>Что делает</th>
-            <th>Опасность</th>
-          </tr>
-          <tr>
-            <td><code>mkdir</code></td>
-            <td>Создать папку</td>
-            <td>Низкая</td>
-          </tr>
-          <tr>
-            <td><code>touch</code></td>
-            <td>Создать пустой файл</td>
-            <td>Низкая</td>
-          </tr>
-          <tr>
-            <td><code>cp</code></td>
-            <td>Копировать</td>
-            <td>Средняя</td>
-          </tr>
-          <tr>
-            <td><code>mv</code></td>
-            <td>Переместить / переименовать</td>
-            <td>Средняя</td>
-          </tr>
-          <tr>
-            <td><code>rm</code></td>
-            <td>Удалить</td>
-            <td><strong style="color: #f38ba8">ВЫСОКАЯ</strong></td>
-          </tr>
-        </table>
-        <div class="tip tip-warn">
-          ⚠️ В Linux нет корзины! <code>rm</code> удаляет навсегда.
-        </div>
-      </section>
+/* ============ NAV DOTS ============ */
+.nav-dots {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 100;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 10px 16px;
+  border-radius: 980px;
+  box-shadow: var(--shadow-sm);
+}
+.nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  padding: 0;
+}
+.nav-dot.active {
+  width: 28px;
+  border-radius: 4px;
+  background: var(--accent);
+}
 
-      <!-- ===== 8. ПРИМЕРЫ ФАЙЛОВЫХ КОМАНД ===== -->
-      <section class="slide">
-        <h2>Файлы на практике</h2>
-        <pre><code><span class="cmd">mkdir</span> demo                          <span class="cmt"># создать папку demo</span>
-<span class="cmd">touch</span> demo/hello.txt                <span class="cmt"># создать пустой файл</span>
-<span class="cmd">cp</span> demo/hello.txt demo/copy.txt     <span class="cmt"># скопировать</span>
-<span class="cmd">mv</span> demo/copy.txt demo/renamed.txt   <span class="cmt"># переименовать</span>
-<span class="cmd">rm</span> demo/hello.txt                   <span class="cmt"># удалить файл</span>
-<span class="cmd">rm</span> -r demo                          <span class="cmt"># удалить папку (-r = рекурсивно)</span></code></pre>
-      </section>
+/* ============ ARROWS ============ */
+.nav-arrow {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-2);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  font-size: 20px;
+  color: var(--text-2);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.nav-arrow:hover {
+  background: #fff;
+  color: var(--accent);
+  box-shadow: var(--shadow-md);
+}
+.nav-arrow.left { left: 24px; }
+.nav-arrow.right { right: 24px; }
+.nav-arrow:disabled { opacity: 0.3; cursor: default; }
 
-      <!-- ===== 9. TAB И ИСТОРИЯ ===== -->
-      <section class="slide">
-        <h2>Магия Bash: Tab и история</h2>
-        <h3>🗂️ Клавиша Tab — твой второй мозг</h3>
-        <pre><code><span class="cmd">ls</span> /e&lt;Tab&gt;            <span class="cmt"># автоматически станет /etc</span>
-<span class="cmd">cat</span> /etc/pass&lt;Tab&gt;    <span class="cmt"># автоматически станет /etc/passwd</span></code></pre>
-        <h3>📜 История команд</h3>
-        <table>
-          <tr>
-            <th>Действие</th>
-            <th>Что делает</th>
-          </tr>
-          <tr>
-            <td>↑ / ↓</td>
-            <td>Листать историю</td>
-          </tr>
-          <tr>
-            <td><code>history</code></td>
-            <td>Показать всю историю</td>
-          </tr>
-          <tr>
-            <td><code>!n</code></td>
-            <td>Выполнить команду №n</td>
-          </tr>
-          <tr>
-            <td><code>Ctrl + R</code></td>
-            <td>Поиск по истории</td>
-          </tr>
-        </table>
-        <div class="tip tip-good">
-          💡 <code>Ctrl+R</code> — привычка с первого дня.
-        </div>
-      </section>
+/* ============ SLIDE COUNTER ============ */
+.slide-counter {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  font-size: 14px;
+  color: var(--text-3);
+  z-index: 100;
+  font-weight: 500;
+}
 
-      <!-- ===== 10. WILDCARDS ===== -->
-      <section class="slide">
-        <h2>Wildcards (звёздочки) — массовое оружие</h2>
-        <pre><code><span class="cmd">ls</span> *.txt          <span class="cmt"># все .txt файлы в папке</span>
-<span class="cmd">rm</span> photo_*.jpg    <span class="cmt"># удалить все jpg, начинающиеся с photo_</span>
-<span class="cmd">cp</span> main* /backup/ <span class="cmt"># скопировать всё, что начинается с main</span></code></pre>
-        <div class="tip tip-info">
-          ⭐ Одна звёздочка заменяет сто копипастов.
-        </div>
-      </section>
+/* ============ RESPONSIVE ============ */
+@media (max-width: 768px) {
+  .slide { padding: 32px 24px 80px; }
+  .two-col, .two-col-narrow { grid-template-columns: 1fr; }
+  .z-demo, .f-demo { width: 100%; max-width: 360px; }
+  .hero-card { width: 100%; max-width: 360px; }
+  .nav-arrow { display: none; }
+}
+</style>
+</head>
+<body>
 
-      <!-- ===== 11. ПОТОКИ ===== -->
-      <section class="slide">
-        <h2>Три «потока» каждого процесса</h2>
-        <table>
-          <tr>
-            <th>Номер</th>
-            <th>Имя</th>
-            <th>Что это</th>
-          </tr>
-          <tr>
-            <td>0</td>
-            <td>stdin</td>
-            <td>Ввод</td>
-          </tr>
-          <tr>
-            <td>1</td>
-            <td>stdout</td>
-            <td>Обычный вывод</td>
-          </tr>
-          <tr>
-            <td>2</td>
-            <td>stderr</td>
-            <td>Вывод ошибок</td>
-          </tr>
-        </table>
-        <h3>Перенаправление</h3>
-        <pre><code><span class="cmd">echo</span> "Hello" &gt; out.txt      <span class="cmt"># записать (перезапишет)</span>
-<span class="cmd">echo</span> "World" &gt;&gt; out.txt     <span class="cmt"># дописать в конец</span>
-<span class="cmd">ls</span> /nonexistent 2&gt; err.txt  <span class="cmt"># ошибки — в отдельный файл</span></code></pre>
-      </section>
+<div class="slide-counter" id="counter">1 / 18</div>
+<div class="nav-arrow left" id="prevBtn">&#8249;</div>
+<div class="nav-arrow right" id="nextBtn">&#8250;</div>
 
-      <!-- ===== 12. КОНВЕЙЕР ===== -->
-      <section class="slide">
-        <h2>Конвейер: <code>|</code></h2>
-        <p>
-          Смысл: <strong>вывод левой команды становится вводом правой</strong>.
-        </p>
-        <pre><code><span class="cmd">cat</span> file.txt | <span class="cmd">grep</span> "error" | <span class="cmd">wc</span> -l</code></pre>
-        <p>Перевод на человеческий:</p>
-        <ol>
-          <li>Прочитать файл</li>
-          <li>Найти строки со словом «error»</li>
-          <li>Посчитать, сколько их</li>
-        </ol>
-        <div class="tip tip-info">
-          🎯 Три команды, соединённые в одну строку. Это и есть сила Bash.
-        </div>
-      </section>
+<div class="carousel">
+  <div class="slides-track" id="track">
 
-      <!-- ===== 13. СЕТЬ ===== -->
-      <section class="slide">
-        <h2>Сетевые команды — шпаргалка</h2>
-        <table>
-          <tr>
-            <th>Команда</th>
-            <th>Зачем</th>
-            <th>Пример</th>
-          </tr>
-          <tr>
-            <td><code>ping</code></td>
-            <td>Проверить связь</td>
-            <td><code>ping google.com</code></td>
-          </tr>
-          <tr>
-            <td><code>ssh</code></td>
-            <td>Подключиться к серверу</td>
-            <td><code>ssh user@192.168.1.10</code></td>
-          </tr>
-          <tr>
-            <td><code>scp</code></td>
-            <td>Передать файл</td>
-            <td><code>scp file.txt user@host:/path/</code></td>
-          </tr>
-          <tr>
-            <td><code>curl</code></td>
-            <td>HTTP-запросы</td>
-            <td><code>curl -O https://example.com/file</code></td>
-          </tr>
-          <tr>
-            <td><code>wget</code></td>
-            <td>Скачать файл</td>
-            <td><code>wget https://example.com/file</code></td>
-          </tr>
-        </table>
-      </section>
-
-      <!-- ===== 14. ПРАКТИКА 1 ===== -->
-      <section class="slide">
-        <h2>Практика в классе (повторяем за мной)</h2>
-        <h3>Раунд 1: осмотреться</h3>
-        <pre><code><span class="cmd">pwd</span>
-<span class="cmd">ls</span> -la
-<span class="cmd">cd</span> /tmp
-<span class="cmd">pwd</span>
-<span class="cmd">cd</span> -
-<span class="cmd">cd</span> ~</code></pre>
-        <h3>Раунд 2: что-нибудь создать</h3>
-        <pre><code><span class="cmd">mkdir</span> bash_demo
-<span class="cmd">cd</span> bash_demo
-<span class="cmd">touch</span> a.txt b.txt c.txt
-<span class="cmd">mkdir</span> subdir
-<span class="cmd">mv</span> a.txt subdir/
-<span class="cmd">cp</span> b.txt subdir/b_backup.txt
-<span class="cmd">rm</span> c.txt
-<span class="cmd">ls</span> -R</code></pre>
-      </section>
-
-      <!-- ===== 15. ПРАКТИКА 2 ===== -->
-      <section class="slide">
-        <h2>Практика: продолжаем</h2>
-        <h3>Раунд 3: почувствовать мощь</h3>
-        <pre><code><span class="cmd">cd</span> ~
-<span class="cmd">history</span> | <span class="cmd">tail</span> -5
-<span class="cmt"># попробуйте Ctrl+R и найдите свою mkdir</span>
-<span class="cmd">echo</span> "line1" &gt; test.txt
-<span class="cmd">echo</span> "line2" &gt;&gt; test.txt
-<span class="cmd">cat</span> test.txt
-<span class="cmd">cat</span> test.txt | <span class="cmd">wc</span> -l</code></pre>
-        <h3>Раунд 4: сеть</h3>
-        <pre><code><span class="cmd">ping</span> -c 4 127.0.0.1
-<span class="cmd">curl</span> -I https://example.com</code></pre>
-      </section>
-
-      <!-- ===== 16. ДОМАШКА ===== -->
-      <section class="slide">
-        <h2>Домашка — «собачий корм» на закрепление</h2>
-        <ol>
-          <li>
-            Своими словами объясни: чем <strong>Bash</strong> отличается от
-            <strong>терминала</strong>?<br /><span
-              style="color: #6c7086; font-size: 17px"
-              >Подсказка: один — собака, второй — дверь в будку.</span
-            >
-          </li>
-          <li>
-            Найди у себя папку, где больше 50 файлов, и посчитай их количество
-            через Bash.
-          </li>
-          <li>
-            Подготовься к следующей теме: что делают <code>chmod</code> и
-            <code>chown</code>? Почему на серверах это критично?
-          </li>
-        </ol>
-      </section>
-
-      <!-- ===== 17. ФИНАЛ ===== -->
-      <section class="slide title-slide">
-        <div class="dog">🐕</div>
-        <h1>Bash — твой верный пёс</h1>
-        <p class="subtitle">Дрессируй его каждый день</p>
-        <p class="meta">Спасибо за внимание!</p>
-      </section>
+    <!-- ============ SLIDE 1: TITLE ============ -->
+    <div class="slide slide-title">
+      <div class="badge">UI / UX</div>
+      <h1>Композиция и пространство</h1>
+      <p>Системы отступов, сетки, визуальные паттерны и психология форм</p>
+      <div class="meta">Основы визуального проектирования интерфейсов</div>
     </div>
 
-    <!-- ===== НАВИГАЦИЯ ===== -->
-    <div class="nav">
-      <button id="btnPrev" title="Назад (←)">‹</button>
-      <div class="counter"><b id="cur">1</b> / <span id="total">17</span></div>
-      <button id="btnNext" title="Вперёд (→)">›</button>
+    <!-- ============ SLIDE 2: AGENDA ============ -->
+    <div class="slide slide-content">
+      <h2>План</h2>
+      <p class="lead">Что разберём за сегодня</p>
+      <div class="col" style="gap:12px; max-width:680px;">
+        <div class="row" style="align-items:center; gap:16px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;">1</div>
+          <div style="font-size:17px;">Система отступов и общий делитель</div>
+        </div>
+        <div class="row" style="align-items:center; gap:16px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;">2</div>
+          <div style="font-size:17px;">Композиция: принцип близости</div>
+        </div>
+        <div class="row" style="align-items:center; gap:16px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;">3</div>
+          <div style="font-size:17px;">Закругления и формула вложенности</div>
+        </div>
+        <div class="row" style="align-items:center; gap:16px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;">4</div>
+          <div style="font-size:17px;">Паттерны Z и F, управление вниманием</div>
+        </div>
+        <div class="row" style="align-items:center; gap:16px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;">5</div>
+          <div style="font-size:17px;">Сетки: Flex, Bootstrap, CSS Grid</div>
+        </div>
+        <div class="row" style="align-items:center; gap:16px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;">6</div>
+          <div style="font-size:17px;">Воздух, психология форм и баланс</div>
+        </div>
+      </div>
     </div>
 
-    <div class="dots" id="dots"></div>
+    <!-- ============ SLIDE 3: SPACING SYSTEM ============ -->
+    <div class="slide slide-content">
+      <h2>Система отступов</h2>
+      <p class="lead">Почему все отступы должны быть кратны одному числу</p>
+      <div class="two-col-narrow">
+        <div>
+          <ul class="feature-list">
+            <li><span class="check">✓</span> <span>Базовый делитель — обычно <strong>4</strong> или <strong>8</strong> пикселей. Все отступы — его кратные: 8, 16, 24, 32, 48, 64…</span></li>
+            <li><span class="check">✓</span> <span>Это создаёт <strong>визуальный ритм</strong> — глаз улавливает закономерность и интерфейс кажется упорядоченным.</span></li>
+            <li><span class="check">✓</span> <span>Упрощает коммуникацию: вместо «сделай отступ чуть больше» — «поставь 24px».</span></li>
+            <li><span class="check">✓</span> <span>Масштабируется: одна система работает на мобильных и десктопах.</span></li>
+          </ul>
+          <div class="callout">
+            <strong>Правило:</strong> если отступ не кратен базовому делителю — его нельзя использовать. Никаких 13px, 17px или 25px.
+          </div>
+        </div>
+        <div class="center-wrap">
+          <div class="spacing-scale">
+            <div class="spacing-bar" style="height:8px;">8</div>
+            <div class="spacing-bar" style="height:16px;">16</div>
+            <div class="spacing-bar" style="height:24px;">24</div>
+            <div class="spacing-bar" style="height:32px;">32</div>
+            <div class="spacing-bar" style="height:48px;">48</div>
+            <div class="spacing-bar" style="height:64px;">64</div>
+            <div class="spacing-bar" style="height:96px;">96</div>
+          </div>
+          <p style="font-size:14px; color:var(--text-3);">Шкала отступов с базовым делителем 8</p>
+        </div>
+      </div>
+    </div>
 
-    <script>
-      const slides = document.querySelectorAll(".slide");
-      const total = slides.length;
-      let current = 0;
+    <!-- ============ SLIDE 4: PROXIMITY ============ -->
+    <div class="slide slide-content">
+      <h2>Композиция: принцип близости</h2>
+      <p class="lead">Элементы рядом — воспринимаются как группа. Элементы далеко — как разные вещи</p>
+      <div class="two-col">
+        <div class="center-wrap">
+          <div class="proximity-demo">
+            <div class="col" style="gap:4px;">
+              <div class="proximity-group">
+                <div class="proximity-dot"></div>
+                <div class="proximity-dot"></div>
+                <div class="proximity-dot"></div>
+              </div>
+              <div class="proximity-group" style="margin-top:40px;">
+                <div class="proximity-dot gray"></div>
+                <div class="proximity-dot gray"></div>
+                <div class="proximity-dot gray"></div>
+              </div>
+            </div>
+          </div>
+          <p class="proximity-label">Близко → одна группа ✕ 2</p>
+        </div>
+        <div class="center-wrap">
+          <div class="proximity-demo">
+            <div class="col" style="gap:24px;">
+              <div class="proximity-group" style="gap:24px;">
+                <div class="proximity-dot"></div>
+                <div class="proximity-dot"></div>
+                <div class="proximity-dot"></div>
+              </div>
+              <div class="proximity-group" style="gap:24px;">
+                <div class="proximity-dot gray"></div>
+                <div class="proximity-dot gray"></div>
+                <div class="proximity-dot gray"></div>
+              </div>
+            </div>
+          </div>
+          <p class="proximity-label">Далеко → просто точки</p>
+        </div>
+      </div>
+      <div class="callout">
+        <strong>Закон близости (Гештальт):</strong> мозг группирует объекты по расстоянию между ними. Меньше отступа — сильнее связь. Больше отступа — слабее. Управляя отступами, вы управляете смыслом.
+      </div>
+    </div>
 
-      const btnPrev = document.getElementById("btnPrev");
-      const btnNext = document.getElementById("btnNext");
-      const curLabel = document.getElementById("cur");
-      const totalLabel = document.getElementById("total");
-      const progressBar = document.getElementById("progressBar");
-      const dotsWrap = document.getElementById("dots");
+    <!-- ============ SLIDE 5: PROXIMITY PRACTICE ============ -->
+    <div class="slide slide-content">
+      <h2>Близость на практике</h2>
+      <p class="lead">Один и тот же контент, разные отступы — разный смысл</p>
+      <div class="two-col">
+        <div class="card" style="padding:20px;">
+          <div style="font-size:18px; font-weight:700; margin-bottom:2px;">Заголовок</div>
+          <div style="font-size:14px; color:var(--text-2); margin-bottom:2px;">Подзаголовок</div>
+          <div style="font-size:14px; color:var(--text-3); margin-bottom:16px;">Описание элемента</div>
+          <div style="font-size:18px; font-weight:700; margin-bottom:2px;">Заголовок 2</div>
+          <div style="font-size:14px; color:var(--text-2); margin-bottom:2px;">Подзаголовок 2</div>
+          <div style="font-size:14px; color:var(--text-3);">Описание 2</div>
+          <div class="tag bad ws-tag" style="margin-top:16px;">Не понять, где группа</div>
+        </div>
+        <div class="card" style="padding:20px;">
+          <div style="font-size:18px; font-weight:700;">Заголовок</div>
+          <div style="font-size:14px; color:var(--text-2);">Подзаголовок</div>
+          <div style="font-size:14px; color:var(--text-3); margin-bottom:24px;">Описание элемента</div>
+          <div style="font-size:18px; font-weight:700;">Заголовок 2</div>
+          <div style="font-size:14px; color:var(--text-2);">Подзаголовок 2</div>
+          <div style="font-size:14px; color:var(--text-3);">Описание 2</div>
+          <div class="tag good ws-tag" style="margin-top:16px;">Чётко две группы</div>
+        </div>
+      </div>
+    </div>
 
-      totalLabel.textContent = total;
+    <!-- ============ SLIDE 6: RADIUS FORMULA ============ -->
+    <div class="slide slide-content">
+      <h2>Закругления и формула вложенности</h2>
+      <p class="lead">Внешнее закругление = внутреннее закругление + отступ</p>
+      <div class="two-col">
+        <div class="center-wrap">
+          <div class="radius-outer" style="border-radius:28px; padding:16px;">
+            <div class="radius-inner" style="border-radius:12px;">Внутри: 12px</div>
+          </div>
+          <div class="radius-formula">
+            Внешнее (28) = Внутреннее (12) + Отступ (16)
+          </div>
+        </div>
+        <div>
+          <ul class="feature-list">
+            <li><span class="check">✓</span> <span>Когда контейнер скруглён, вложенный элемент тоже нужно скруглить — иначе возникает визуальный диссонанс.</span></li>
+            <li><span class="check">✓</span> <span>Формула гарантирует, что кривые <strong>параллельны</strong> и смотрятся естественно.</span></li>
+            <li><span class="check">✓</span> <span>Если внешний радиус меньше внутреннего — кривые «пересекаются» и выглядит это сломанным.</span></li>
+            <li><span class="check">✓</span> <span>То же касается отступов: <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-family:monospace;">padding</code> контейнера = разница между радиусами.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
 
-      // Генерим точки-индикаторы
-      slides.forEach((_, i) => {
-        const d = document.createElement("div");
-        d.className = "dot" + (i === 0 ? " active" : "");
-        d.title = "Слайд " + (i + 1);
-        d.addEventListener("click", () => goTo(i));
-        dotsWrap.appendChild(d);
-      });
-      const dots = document.querySelectorAll(".dot");
+    <!-- ============ SLIDE 7: RADIUS EXAMPLES ============ -->
+    <div class="slide slide-content">
+      <h2>Правильно vs неправильно</h2>
+      <p class="lead">Сравнение скруглений с параллельными и пересекающимися кривыми</p>
+      <div class="row" style="justify-content:center; gap:32px;">
+        <div class="center-wrap">
+          <div style="border:3px solid var(--green); border-radius:36px; padding:20px;">
+            <div style="background:#e8f8ed; border-radius:16px; padding:24px 32px; color:var(--green); font-weight:600;">R 16 + padding 20 = R 36 ✓</div>
+          </div>
+          <div class="tag good ws-tag">Параллельные кривые</div>
+        </div>
+        <div class="center-wrap">
+          <div style="border:3px solid var(--red); border-radius:14px; padding:20px;">
+            <div style="background:#ffeaea; border-radius:24px; padding:24px 32px; color:var(--red); font-weight:600;">R 24 внутри, R 14 снаружи ✗</div>
+          </div>
+          <div class="tag bad ws-tag">Кривые пересекаются</div>
+        </div>
+      </div>
+    </div>
 
-      function render() {
-        slides.forEach((s, i) => {
-          s.classList.remove("active", "prev");
-          if (i === current) s.classList.add("active");
-          else if (i < current) s.classList.add("prev");
-        });
-        dots.forEach((d, i) => d.classList.toggle("active", i === current));
+    <!-- ============ SLIDE 8: Z PATTERN ============ -->
+    <div class="slide slide-content">
+      <h2>Z-паттерн</h2>
+      <p class="lead">Как глаз движется по странице с небольшим количеством контента</p>
+      <div class="two-col">
+        <div class="center-wrap">
+          <div class="z-demo">
+            <div class="z-box z1"></div>
+            <div class="z-box z2"></div>
+            <div class="z-box z3"></div>
+            <div class="z-box z4"></div>
+            <svg width="100%" height="100%" style="position:absolute;top:0;left:0;pointer-events:none;" viewBox="0 0 480 300" preserveAspectRatio="none">
+              <path d="M64 44 L416 44 L64 256 L416 256" stroke="#ff3b30" stroke-width="3" fill="none" stroke-dasharray="8 6" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <ul class="feature-list">
+            <li><span class="check">✓</span> <span><strong>1.</strong> Верхний левый угол — логотип, название бренда.</span></li>
+            <li><span class="check">✓</span> <span><strong>2.</strong> Верхний правый — навигация или кнопка действия (Login, Sign up).</span></li>
+            <li><span class="check">✓</span> <span><strong>3.</strong> Нижний левый — ключевая информация, заголовок.</span></li>
+            <li><span class="check">✓</span> <span><strong>4.</strong> Нижний правый — призыв к действию (CTA-кнопка).</span></li>
+          </ul>
+          <div class="callout">
+            <strong>Когда применять:</strong> лендинги, страницы с минимумом текста, где важны 4 ключевых элемента.
+          </div>
+        </div>
+      </div>
+    </div>
 
-        curLabel.textContent = current + 1;
-        btnPrev.disabled = current === 0;
-        btnNext.disabled = current === total - 1;
+    <!-- ============ SLIDE 9: F PATTERN ============ -->
+    <div class="slide slide-content">
+      <h2>F-паттерн</h2>
+      <p class="lead">Как глаз читает страницы с большим количеством текста</p>
+      <div class="two-col">
+        <div class="center-wrap">
+          <div class="f-demo">
+            <div class="f-bar h1"></div>
+            <div class="f-bar h2"></div>
+            <div class="f-bar h3"></div>
+            <div class="f-bar h4"></div>
+            <div class="f-bar h5"></div>
+            <div class="f-bar h3"></div>
+            <div class="f-bar h4"></div>
+            <svg width="100%" height="100%" style="position:absolute;top:24px;left:24px;width:calc(100% - 48px);height:calc(100% - 48px);pointer-events:none;" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <path d="M5 10 L95 10 M5 10 L5 90 L60 90" stroke="#ff3b30" stroke-width="1.5" fill="none" stroke-dasharray="3 2"/>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <ul class="feature-list">
+            <li><span class="check">✓</span> <span>Внимание концентрируется на <strong>верхней части</strong> — там самый важный контент.</span></li>
+            <li><span class="check">✓</span> <span>Горизонтальные «сканы» становятся <strong>короче</strong> к низу — пользователь читает меньше.</span></li>
+            <li><span class="check">✓</span> <span>Левая сторона — strongest: навигация, заголовки, списки.</span></li>
+            <li><span class="check">✓</span> <span>Правая сторона часто игнорируется — туда ставят второстепенное.</span></li>
+          </ul>
+          <div class="callout">
+            <strong>Когда применять:</strong> блоги, статьи, каталоги, списки, email-рассылки — везде, где много текстового контента.
+          </div>
+        </div>
+      </div>
+    </div>
 
-        const pct = ((current + 1) / total) * 100;
-        progressBar.style.width = pct + "%";
-      }
+    <!-- ============ SLIDE 10: HERO EYE FLOW ============ -->
+    <div class="slide slide-content">
+      <h2>Управление вниманием в hero-блоке</h2>
+      <p class="lead">Пользователь не читает — он сканирует. Важно знать порядок</p>
+      <div class="hero-demo">
+        <div class="hero-card">
+          <div class="hero-img">🖼️</div>
+          <div class="hero-title">Заголовок, который продаёт</div>
+          <div class="hero-btn">Начать бесплатно</div>
+          <div class="hero-sub">Подзаголовок с уточнением и деталями</div>
+        </div>
+        <div class="eye-flow">
+          <div class="eye-step"><div class="eye-num">1</div><p><strong>Картинка</strong> — привлекает внимание первой</p></div>
+          <div class="eye-step"><div class="eye-num">2</div><p><strong>Заголовок</strong> — объясняет, о чём речь</p></div>
+          <div class="eye-step"><div class="eye-num">3</div><p><strong>Кнопка</strong> — призыв к действию</p></div>
+          <div class="eye-step"><div class="eye-num">4</div><p><strong>Подзаголовок</strong> — читается последним</p></div>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:24px;">
+        <strong>Вывод:</strong> подзаголовок не должен конкурировать с заголовком по весу. Кнопка должна быть заметнее подзаголовка. Картинка — ярче текста.
+      </div>
+    </div>
 
-      function next() {
-        if (current < total - 1) {
-          current++;
-          render();
-        }
-      }
-      function prev() {
-        if (current > 0) {
-          current--;
-          render();
-        }
-      }
-      function goTo(i) {
-        current = i;
-        render();
-      }
+    <!-- ============ SLIDE 11: GRIDS INTRO ============ -->
+    <div class="slide slide-content">
+      <h2>Сетки в дизайне</h2>
+      <p class="lead">Сетка — это каркас, который организует контент и создаёт ритм</p>
+      <div class="two-col">
+        <div>
+          <ul class="feature-list">
+            <li><span class="check">✓</span> <span><strong>Flexbox</strong> — одномерная: элементы в строку или столбец.</span></li>
+            <li><span class="check">✓</span> <span><strong>Bootstrap Grid</strong> — 12-колоночная система с готовыми классами.</span></li>
+            <li><span class="check">✓</span> <span><strong>CSS Grid</strong> — двумерная: строки и колонки одновременно.</span></li>
+            <li><span class="check">✓</span> <span>Сетка не ограничивает — она <strong>направляет</strong>.</span></li>
+          </ul>
+        </div>
+        <div class="center-wrap">
+          <div class="grid-demo grid-12">
+            <div class="grid-item">1</div><div class="grid-item">2</div><div class="grid-item">3</div>
+            <div class="grid-item">4</div><div class="grid-item">5</div><div class="grid-item">6</div>
+            <div class="grid-item">7</div><div class="grid-item">8</div><div class="grid-item">9</div>
+            <div class="grid-item">10</div><div class="grid-item">11</div><div class="grid-item">12</div>
+          </div>
+          <p style="font-size:14px; color:var(--text-3);">12-колоночная сетка (Bootstrap)</p>
+        </div>
+      </div>
+    </div>
 
-      btnNext.addEventListener("click", next);
-      btnPrev.addEventListener("click", prev);
+    <!-- ============ SLIDE 12: FLEXBOX ============ -->
+    <div class="slide slide-content">
+      <h2>Flexbox</h2>
+      <p class="lead">Одномерная раскладка — элементы в строку или в колонку</p>
+      <div class="two-col">
+        <div>
+          <ul class="feature-list">
+            <li><span class="check">✓</span> <span>Идеален для <strong>рядов</strong> и <strong>колонок</strong>: меню, панели кнопок, теги.</span></li>
+            <li><span class="check">✓</span> <span><code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-family:monospace;">justify-content</code> — выравнивание по главной оси.</span></li>
+            <li><span class="check">✓</span> <span><code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-family:monospace;">align-items</code> — по поперечной.</span></li>
+            <li><span class="check">✓</span> <span><code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-family:monospace;">flex-wrap</code> — перенос на новую строку.</span></li>
+            <li><span class="check">✓</span> <span><code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-family:monospace;">gap</code> — отступы между элементами.</span></li>
+          </ul>
+        </div>
+        <div class="col" style="gap:16px;">
+          <div class="flex-demo">
+            <div class="flex-child">Пункт 1</div>
+            <div class="flex-child">Пункт 2</div>
+            <div class="flex-child">Пункт 3</div>
+          </div>
+          <div class="flex-demo" style="justify-content:space-between;">
+            <div class="flex-child">Left</div>
+            <div class="flex-child">Center</div>
+            <div class="flex-child">Right</div>
+          </div>
+          <div class="flex-demo" style="flex-direction:column; align-items:flex-start;">
+            <div class="flex-child">Строка A</div>
+            <div class="flex-child">Строка B</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
-          e.preventDefault();
-          next();
-        } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
-          e.preventDefault();
-          prev();
-        } else if (e.key === "Home") {
-          goTo(0);
-        } else if (e.key === "End") {
-          goTo(total - 1);
-        } else if (e.key === "f" || e.key === "F") {
-          if (!document.fullscreenElement)
-            document.documentElement.requestFullscreen();
-          else document.exitFullscreen();
-        }
-      });
+    <!-- ============ SLIDE 13: BOOTSTRAP GRID ============ -->
+    <div class="slide slide-content">
+      <h2>Bootstrap Grid</h2>
+      <p class="lead">12-колоночная сетка с готовыми классами адаптивности</p>
+      <div class="two-col">
+        <div>
+          <ul class="feature-list">
+            <li><span class="check">✓</span> <span>Каждая строка делится на <strong>12 колонок</strong>. Элемент занимает 1–12 колонок.</span></li>
+            <li><span class="check">✓</span> <span>Классы: <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-family:monospace;">col-6</code> = половина, <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-family:monospace;">col-4</code> = треть, <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-family:monospace;">col-3</code> = четверть.</span></li>
+            <li><span class="check">✓</span> <span>Адаптивные классы: <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-family:monospace;">col-md-6</code> — на планшете 2 колонки, <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-family:monospace;">col-12</code> — на телефоне в строку.</span></li>
+            <li><span class="check">✓</span> <span>Gutter — отступ между колонками, обычно 24–30px.</span></li>
+          </ul>
+        </div>
+        <div class="center-wrap">
+          <div style="width:100%; max-width:520px;">
+            <div style="display:grid; grid-template-columns: repeat(12,1fr); gap:4px; margin-bottom:8px;">
+              <div class="grid-item" style="grid-column: span 6;">col-6</div>
+              <div class="grid-item" style="grid-column: span 6;">col-6</div>
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(12,1fr); gap:4px; margin-bottom:8px;">
+              <div class="grid-item" style="grid-column: span 4;">col-4</div>
+              <div class="grid-item" style="grid-column: span 4;">col-4</div>
+              <div class="grid-item" style="grid-column: span 4;">col-4</div>
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(12,1fr); gap:4px; margin-bottom:8px;">
+              <div class="grid-item" style="grid-column: span 3;">3</div>
+              <div class="grid-item" style="grid-column: span 3;">3</div>
+              <div class="grid-item" style="grid-column: span 3;">3</div>
+              <div class="grid-item" style="grid-column: span 3;">3</div>
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(12,1fr); gap:4px;">
+              <div class="grid-item" style="grid-column: span 8;">col-8</div>
+              <div class="grid-item" style="grid-column: span 4;">col-4</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-      // Свайпы на мобилке
-      let touchStartX = 0;
-      document.addEventListener(
-        "touchstart",
-        (e) => (touchStartX = e.changedTouches[0].screenX)
-      );
-      document.addEventListener("touchend", (e) => {
-        const dx = e.changedTouches[0].screenX - touchStartX;
-        if (Math.abs(dx) > 60) {
-          dx < 0 ? next() : prev();
-        }
-      });
+    <!-- ============ SLIDE 14: CSS GRID ============ -->
+    <div class="slide slide-content">
+      <h2>CSS Grid</h2>
+      <p class="lead">Двумерная раскладка — строки и колонки одновременно</p>
+      <div class="two-col">
+        <div>
+          <ul class="feature-list">
+            <li><span class="check">✓</span> <span>Полный контроль над <strong>строками и колонками</strong> одновременно.</span></li>
+            <li><span class="check">✓</span> <span><code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-family:monospace;">grid-template-areas</code> — именованные области для наглядной раскладки.</span></li>
+            <li><span class="check">✓</span> <span><code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-family:monospace;">repeat(auto-fit, minmax(...))</code> — колонки сами подстраиваются под ширину.</span></li>
+            <li><span class="check">✓</span> <span>Идеален для <strong>целых макетов страниц</strong>, а не только компонентов.</span></li>
+          </ul>
+          <div class="callout">
+            <strong>Flex vs Grid:</strong> Flex — для рядов внутри компонента. Grid — для раскладки всей страницы.
+          </div>
+        </div>
+        <div class="center-wrap">
+          <div class="grid-demo grid-named" style="max-width:400px;">
+            <div class="grid-item gi-header">Header</div>
+            <div class="grid-item gi-sidebar">Sidebar</div>
+            <div class="grid-item gi-main">Main Content</div>
+            <div class="grid-item gi-footer">Footer</div>
+          </div>
+          <p style="font-size:13px; color:var(--text-3); font-family:monospace;">grid-template-areas</p>
+        </div>
+      </div>
+    </div>
 
-      // Клик по полю (не по кнопкам)
-      document.getElementById("stage").addEventListener("click", (e) => {
-        if (e.target.closest(".nav") || e.target.closest(".dots")) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        x < rect.width / 3 ? prev() : x > (rect.width * 2) / 3 ? next() : null;
-      });
+    <!-- ============ SLIDE 15: AUTO-FIT GRID ============ -->
+    <div class="slide slide-content">
+      <h2>Адаптивная сетка без медиазапросов</h2>
+      <p class="lead">CSS Grid auto-fit — карточки сами перестраиваются под ширину</p>
+      <div class="col" style="gap:16px; width:100%; max-width:680px;">
+        <div class="grid-demo grid-auto">
+          <div class="grid-item">Карточка 1</div>
+          <div class="grid-item">Карточка 2</div>
+          <div class="grid-item">Карточка 3</div>
+          <div class="grid-item">Карточка 4</div>
+          <div class="grid-item">Карточка 5</div>
+          <div class="grid-item">Карточка 6</div>
+        </div>
+        <div class="card" style="padding:20px;">
+          <code style="font-family:monospace; font-size:13px; color:var(--text-2); display:block; white-space:pre; line-height:1.6;">.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}</code>
+        </div>
+        <p style="font-size:14px; color:var(--text-3);">Картинки меняют количество колонок в зависимости от ширины — без единого @media</p>
+      </div>
+    </div>
 
-      render();
-    </script>
-  </body>
+    <!-- ============ SLIDE 16: WHITESPACE ============ -->
+    <div class="slide slide-content">
+      <h2>Воздух в дизайне</h2>
+      <p class="lead">Пустое пространство — это не пустота. Это инструмент</p>
+      <div class="two-col">
+        <div class="whitespace-compare">
+          <div class="ws-card">
+            <h4>Плотно</h4>
+            <p>Текст прижат, нет дыхания. Читателю тесно, сложно ориентироваться.</p>
+            <div class="ws-tag bad">Тесно и дёшево</div>
+          </div>
+          <div class="ws-card spacious">
+            <h4>Воздушно</h4>
+            <p>Отступы дают глазу отдых. Контент читается легко, воспринимается дорого.</p>
+            <div class="ws-tag good">Премиально</div>
+          </div>
+        </div>
+        <div>
+          <ul class="feature-list">
+            <li><span class="check">✓</span> <span>Воздух <strong>разделяет смысловые блоки</strong> — работает как принцип близости.</span></li>
+            <li><span class="check">✓</span> <span>Чем больше воздуха вокруг — тем <strong>дороже</strong> воспринимается продукт (Apple, luxury-бренды).</span></li>
+            <li><span class="check">✓</span> <span>Чем плотнее — тем <strong>дешевле</strong> и «массовее» (маркетплейсы, агрегаторы).</span></li>
+            <li><span class="check">✓</span> <span>Воздух вокруг важного элемента <strong>привлекает внимание</strong> — изоляция = фокус.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SLIDE 17: PSYCHOLOGY OF FORMS ============ -->
+    <div class="slide slide-content">
+      <h2>Психология форм</h2>
+      <p class="lead">Форма элемента передаёт настроение ещё до чтения текста</p>
+      <div class="form-psych">
+        <div class="shape-card">
+          <div class="shape shape-square"></div>
+          <h4>Острые углы</h4>
+          <p>Строгость, надёжность, официальность. Банки, документы, B2B.</p>
+        </div>
+        <div class="shape-card">
+          <div class="shape shape-rounded"></div>
+          <h4>Скруглённые</h4>
+          <p>Дружелюбие, современность. Большинство приложений и сервисов.</p>
+        </div>
+        <div class="shape-card">
+          <div class="shape shape-pill"></div>
+          <h4>Капсулы</h4>
+          <p>Мягкость, доступность. Чипы, теги, кнопки соцсетей.</p>
+        </div>
+        <div class="shape-card">
+          <div class="shape shape-circle"></div>
+          <h4>Круг</h4>
+          <p>Общение, человек, игра. Аватары, иконки, FAB-кнопки.</p>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:28px;">
+        <strong>Правило:</strong> радиус скругления — это не вкусовщина, а коммуникация. Острый угол = формальность. Мягкий = дружелюбие. Круг — социальность.
+      </div>
+    </div>
+
+    <!-- ============ SLIDE 18: SUMMARY ============ -->
+    <div class="slide slide-title">
+      <div class="badge">Итог</div>
+      <h1>Композиция — это система</h1>
+      <p>Отступы, сетки, паттерны и формы работают вместе. Освоив их, вы перестаёте «угадывать» и начинаете проектировать осознанно.</p>
+      <div class="tag-row" style="justify-content:center; margin-top:12px;">
+        <span class="tag blue">Кратность 8</span>
+        <span class="tag blue">Принцип близости</span>
+        <span class="tag blue">R внешний = R внутренний + gap</span>
+        <span class="tag green">Z-паттерн</span>
+        <span class="tag green">F-паттерн</span>
+        <span class="tag orange">Воздух = инструмент</span>
+        <span class="tag orange">Форма = сообщение</span>
+      </div>
+      <div class="meta" style="margin-top:32px;">Спасибо за внимание</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="nav-dots" id="navDots"></div>
+
+<script>
+(function() {
+  const track = document.getElementById('track');
+  const slides = track.querySelectorAll('.slide');
+  const total = slides.length;
+  const counter = document.getElementById('counter');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const navDots = document.getElementById('navDots');
+  let current = 0;
+  let isAnimating = false;
+
+  // Create nav dots
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('button');
+    dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', () => goTo(i));
+    navDots.appendChild(dot);
+  }
+  const dots = navDots.querySelectorAll('.nav-dot');
+
+  function goTo(index) {
+    if (index < 0 || index >= total || isAnimating) return;
+    isAnimating = true;
+    current = index;
+    track.style.transform = `translateX(-${current * 100}vw)`;
+    counter.textContent = `${current + 1} / ${total}`;
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === total - 1;
+    setTimeout(() => { isAnimating = false; }, 500);
+  }
+
+  function next() { goTo(current + 1); }
+  function prev() { goTo(current - 1); }
+
+  prevBtn.addEventListener('click', prev);
+  nextBtn.addEventListener('click', next);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+    if (e.key === 'End') { e.preventDefault(); goTo(total - 1); }
+  });
+
+  // Touch swipe
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchMoved = false;
+  document.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchMoved = false;
+  }, { passive: true });
+  document.addEventListener('touchmove', (e) => {
+    touchMoved = true;
+  }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (!touchMoved) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) next(); else prev();
+    }
+  }, { passive: true });
+
+  // Wheel (only if slide fits)
+  let wheelTimeout;
+  document.addEventListener('wheel', (e) => {
+    const slide = slides[current];
+    const canScroll = slide.scrollHeight > slide.clientHeight + 2;
+    if (canScroll) return; // let internal scroll work
+    if (wheelTimeout) return;
+    if (Math.abs(e.deltaY) < 10) return;
+    wheelTimeout = setTimeout(() => { wheelTimeout = null; }, 600);
+    if (e.deltaY > 0) next(); else prev();
+  }, { passive: true });
+
+  // Init
+  prevBtn.disabled = true;
+})();
+</script>
+</body>
 </html>
